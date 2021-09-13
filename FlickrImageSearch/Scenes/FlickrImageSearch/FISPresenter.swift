@@ -16,7 +16,9 @@ class FISPresenter: FISPresentationLogic {
     weak var viewController: FISDisplayLogic?
     
     func displayPhotos(photos: [Photo]) {
-        viewController?.displayPhotos(images: photos)
+        DispatchQueue.main.async {
+            self.viewController?.displayPhotos(images: photos)
+        }
     }
     
     func displayErrorMessage(error: String) {

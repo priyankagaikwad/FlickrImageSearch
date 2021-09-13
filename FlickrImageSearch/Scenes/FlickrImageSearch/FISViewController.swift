@@ -96,11 +96,9 @@ extension FISViewController: UICollectionViewDataSource {
 
 extension FISViewController: FISDisplayLogic {
     func displayPhotos(images: [Photo]) {
-        DispatchQueue.main.async {
-            self.labelInfo.text = ""
-            self.photos = images
-            self.collectionView.reloadData()
-        }
+        self.labelInfo.text = ""
+        self.photos = images
+        self.collectionView.reloadData()
     }
     
     func displayErrorMessage(error:String) {

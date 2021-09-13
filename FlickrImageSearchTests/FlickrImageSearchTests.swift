@@ -11,12 +11,13 @@ import XCTest
 class FlickrImageSearchTests: XCTestCase {
 
     var viewController:FISViewController!
-    var window:UIWindow!
     
     override func setUpWithError() throws {
         // Put setup code here. This method is called before the invocation of each test method in the class.
-        window = UIWindow()
-        viewController = FISViewController(nibName: nil, bundle: nil)
+        let storyboard = UIStoryboard(name: "Main", bundle: nil)
+        viewController = storyboard.instantiateViewController(withIdentifier: "FISViewController") as? FISViewController
+        viewController.loadViewIfNeeded()
+
     }
 
     func testBaseURLStringIsCorrect() {
@@ -35,32 +36,18 @@ class FlickrImageSearchTests: XCTestCase {
     
     override func tearDownWithError() throws {
         // Put teardown code here. This method is called after the invocation of each test method in the class.
-        window = nil
+        viewController = nil
         try super.tearDownWithError()
     }
     
-    func testNumberOfRowsShouldEqualWithTotalMovies() {
-        // Given
+    func testNumberOfItemsShouldEqualWithTotalPhotos() {
         let collectionView = viewController.collectionView
-        loadView()
-        
-        // When
         let photos = [
             Photo(id: "23451156376", owner: "28017113", secret: "8983a8ebc7", server: "578", farm: 1, title: "Merry Christmas!", ispublic: 1, isfriend: 0, isfamily: 0),
             Photo(id: "23451156376", owner: "28017113", secret: "8983a8ebc7", server: "578", farm: 1, title: "Merry Christmas!", ispublic: 1, isfriend: 0, isfamily: 0)
         ]
-        
-        
         viewController.displayPhotos(images: photos)
-        
-        //Then
-        let collectionViewRow = collectionView?.numberOfItems(inSection: 0)
-        XCTAssertEqual(collectionViewRow, photos.count, "total items should be equal with total photos")
+        let collectionViewCell = collectionView?.numberOfItems(inSection: 0)
+        XCTAssertEqual(collectionViewCell, photos.count, "Total items in collection view should be equal with total photos")
     }
-    
-    func loadView() {
-           window.addSubview(viewController.view)
-           RunLoop.current.run(until: Date())
-    }
-
 }
