@@ -34,18 +34,14 @@ class ImageDownloadManager: NSObject {
                 if let tupple = self.dictionaryBlocks.removeValue(forKey: imageView){
                     tupple.2.cancel()
                 }
-                let newOperation = ImageDownloadOperation(url: url) { (image,downloadedImageURL) in
-                
-                    if let tupple = self.dictionaryBlocks[imageView] {
-                    
+                let newOperation = ImageDownloadOperation(url: url) {[weak self] (image,downloadedImageURL) in
+                    guard let weakSelf = self else { return }
+                    if let tupple = weakSelf.dictionaryBlocks[imageView] {
                         if tupple.0 == downloadedImageURL {
-                        
                             if let image = image {
-                            
                                 DataCache.shared.saveImageToCache(key: downloadedImageURL, image: image)
                                 tupple.1(.Success(image), downloadedImageURL)
-                                
-                                if let tupple = self.dictionaryBlocks.removeValue(forKey: imageView){
+                                if let tupple = weakSelf.dictionaryBlocks.removeValue(forKey: imageView){
                                     tupple.2.cancel()
                                 }
                                 
@@ -53,7 +49,7 @@ class ImageDownloadManager: NSObject {
                                 tupple.1(.Failure("Not fetched"), downloadedImageURL)
                             }
                             
-                            _ = self.dictionaryBlocks.removeValue(forKey: imageView)
+                            _ = weakSelf.dictionaryBlocks.removeValue(forKey: imageView)
                         }
                     }
                 }
