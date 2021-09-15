@@ -29,19 +29,24 @@ class FISInteractor: FISInteractorDataLogic {
     
     func fetchSearchImages() {
         FISWorker().request(searchText, pageNo: pageNo) { (result) in
-            DispatchQueue.main.async {
+            DispatchQueue.main.async {[weak self] in
+                guard let weakSelf = self else {return}
                 switch result {
                 case .Success(let results):
                     if let result = results {
-                        self.totalPageNo = result.pages
-                        self.photoArray.append(contentsOf:result.photo)
-                        self.presenter?.displayPhotos(photos: self.photoArray)
+                        weakSelf.totalPageNo = result.pages
+                        weakSelf.photoArray.append(contentsOf:result.photo)
+                        if weakSelf.photoArray.count < 1 {
+                            weakSelf.presenter?.displayNoSearchResultFound()
+                        } else {
+                            weakSelf.presenter?.displayPhotos(photos: weakSelf.photoArray)
+                        }
                     }
                 case .Failure(let message):
-                    self.presenter?.displayErrorMessage(error: message.description)
+                    weakSelf.presenter?.displayErrorMessage(error: message.description)
                 case .Error(let error):
-                    if self.pageNo > 1 {
-                        self.presenter?.displayErrorMessage(error: error)
+                    if weakSelf.pageNo > 1 {
+                        weakSelf.presenter?.displayErrorMessage(error: error)
                     }
                 }
             }

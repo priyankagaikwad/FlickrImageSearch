@@ -53,14 +53,16 @@ class FISWorker: NSObject {
     }
     
     func createSearchRequest(searchText:String, pageNo:Int, bodyParams: [String: Any]? = nil) -> NSMutableURLRequest? {
-        guard let urlString = getSearchURL(searchText: searchText, pageCount: pageNo) else { return nil}
+        guard let urlString = getSearchURL(searchText: searchText, pageCount: pageNo) else { return nil }
         let request = NSMutableURLRequest(url: urlString)
         do {
             if let bodyParams = bodyParams {
                 let data = try JSONSerialization.data(withJSONObject: bodyParams, options: .prettyPrinted)
                 request.httpBody = data
             }
-        } catch {
+        } catch(let error) {
+            print("Invalid Request", error)
+            return nil
 
         }
         request.httpMethod = HttpMethod.get.value

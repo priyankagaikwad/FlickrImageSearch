@@ -10,6 +10,7 @@ import UIKit
 protocol FISDisplayLogic: AnyObject {
     func displayPhotos(images: [Photo])
     func displayErrorMessage(error:String)
+    func displayNoSearchResultFound()
 }
 class FISViewController: UIViewController {
     
@@ -20,6 +21,7 @@ class FISViewController: UIViewController {
     var interactor: FISInteractorDataLogic?
     private var photos: [Photo]?
     private var isFirstTime = true
+    private var loader:UIActivityIndicatorView!
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -34,6 +36,10 @@ class FISViewController: UIViewController {
         navigationController?.title = FISConstants.appTitle
         self.view.bringSubviewToFront(self.labelInfo)
         self.labelInfo.text = "Type to search photos..."
+        loader = UIActivityIndicatorView(frame: self.view.frame)
+        self.view.addSubview(loader)
+        loader?.hidesWhenStopped = true
+
     }
     
     private func configureCollectionView() {
@@ -43,8 +49,9 @@ class FISViewController: UIViewController {
     }
     
     private func configureSearchBar() {
+        searchBar.placeholder = "Type to search photos..."
         searchBar.delegate = self
-        
+
         if isFirstTime {
             searchBar.becomeFirstResponder()
             isFirstTime = false
@@ -59,17 +66,46 @@ class FISViewController: UIViewController {
         interactor.presenter = presenter
         presenter.viewController = viewController
     }
+    
+    private func resetCollectionView() {
+        self.labelInfo.text = "Type to search photos..."
+        photos?.removeAll()
+        collectionView.reloadData()
+        searchBar.becomeFirstResponder()
+    }
+    
+    private func showLoader() {
+        loader?.startAnimating()
+        self.view.addSubview(loader!)
+    }
+    
+    private func hideLoader() {
+        loader?.stopAnimating()
+        loader?.removeFromSuperview()
+    }
 }
 
 extension FISViewController: UISearchBarDelegate {
     func searchBarSearchButtonClicked(_ searchBar: UISearchBar){
         searchBar.resignFirstResponder()
         photos?.removeAll()
+        if ((searchBar.text!.isEmpty)) {
+            resetCollectionView()
+            showAlert(title: "", message: "Please type in search box to see the result!!")
+            return
+        }
         guard let text = searchBar.text, text.count > 1 else {
             return
         }
         self.labelInfo.text = "Loading photos..."
+        showLoader()
         interactor?.search(text: text.removeSpecialChars)
+    }
+    
+    func searchBar(_ searchBar: UISearchBar, textDidChange searchText: String) {
+        if searchText.count == 0 {
+            resetCollectionView()
+        }
     }
 }
 
@@ -82,7 +118,7 @@ extension FISViewController: UICollectionViewDataSource {
     
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell{
         let cell = collectionView.dequeueReusableCell(withReuseIdentifier: FISConstants.imageCollectionViewIdentifier, for: indexPath) as! CollectionViewCell
-        guard let allPhotos = photos else { return cell }
+        guard let allPhotos = photos, allPhotos.count > 1 else { return cell }
         guard let imagePath = allPhotos[indexPath.row].getImagePath() else {
             return cell
         }
@@ -96,16 +132,31 @@ extension FISViewController: UICollectionViewDataSource {
 
 extension FISViewController: FISDisplayLogic {
     func displayPhotos(images: [Photo]) {
-        self.labelInfo.text = ""
+        DispatchQueue.main.async { [weak self] in
+            guard let weakSelf = self else {return}
+            weakSelf.hideLoader()
+            weakSelf.labelInfo.text = ""
+        }
         self.photos = images
         self.collectionView.reloadData()
     }
     
     func displayErrorMessage(error:String) {
-        DispatchQueue.main.async {
-            self.labelInfo.text = ""
-            self.showAlert(title: "Error", message: error)
+        DispatchQueue.main.async { [weak self] in
+            guard let weakSelf = self else {return}
+            weakSelf.hideLoader()
+            weakSelf.labelInfo.text = ""
+            weakSelf.showAlert(title: "Error", message: error)
         }
+    }
+    
+    func displayNoSearchResultFound() {
+        DispatchQueue.main.async { [weak self] in
+            guard let weakSelf = self else {return}
+            weakSelf.hideLoader()
+            weakSelf.labelInfo.text = "No data available for this search text. Please try different text!!"
+        }
+        self.collectionView.reloadData()
     }
     
 }

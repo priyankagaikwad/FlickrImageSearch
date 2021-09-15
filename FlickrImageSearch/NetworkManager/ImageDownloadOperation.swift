@@ -25,15 +25,16 @@ class ImageDownloadOperation: Operation {
         if let url = self.url {
             if self.isCancelled { return }
             NetworkManager.shared.downloadImage(url) { (result) in
-                DispatchQueue.main.async {
+                DispatchQueue.main.async {[weak self] in
+                    guard let weakSelf = self else {return}
                     switch result {
                     case .Success(let image):
-                        if self.isCancelled { return }
-                        if let completion = self.customCompletionBlock{
+                        if weakSelf.isCancelled { return }
+                        if let completion = weakSelf.customCompletionBlock{
                             completion(image, url)
                         }
                     default:
-                        if self.isCancelled { return }
+                        if weakSelf.isCancelled { return }
                         break
                     }
                 }

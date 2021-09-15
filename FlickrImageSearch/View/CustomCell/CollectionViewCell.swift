@@ -17,6 +17,7 @@ class CollectionViewCell: UICollectionViewCell {
     }
     
     func configureCell(_ imageUrl: String) {
+        imageView.image = UIImage(imageLiteralResourceName: "placeholder")
         downloadImage(imageUrl)
     }
     
@@ -25,10 +26,11 @@ class CollectionViewCell: UICollectionViewCell {
             return
         }
         ImageDownloadManager.shared.addOperation(url: path, imageView: imageView) {  [weak self](result,downloadedImageURL)  in
-            DispatchQueue.main.async {
+            DispatchQueue.main.async {[weak self] in
+                guard let weakSelf = self else {return}
                 switch result {
                 case .Success(let image):
-                    self?.imageView.image = image
+                    weakSelf.imageView.image = image
                 case .Failure(_):
                     break
                 case .Error(_):
